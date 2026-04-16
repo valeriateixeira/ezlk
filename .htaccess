@@ -1,0 +1,24 @@
+RewriteEngine On
+
+# If the request is for an existing file or directory, serve it directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Pass Authorization header to PHP (needed for CGI/FastCGI)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Route /api/checar/NAME to the PHP file
+RewriteRule ^api/checar/(.+)$ api/checar.php?name=$1 [L,QSA]
+
+# Route /login to login.php
+RewriteRule ^login$ login.php [L,QSA]
+
+# Route /painel to painel.php
+RewriteRule ^painel$ painel.php [L,QSA]
+
+# Route /editar/PROFILENAME to editar.php
+RewriteRule ^editar/([a-zA-Z0-9_-]+)$ editar.php?name=$1 [L,QSA]
+
+# Route everything else to perfil.php (profile pages)
+RewriteRule ^([a-zA-Z0-9_-]+)$ perfil.php?name=$1 [L,QSA]
