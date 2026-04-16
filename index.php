@@ -26,8 +26,8 @@
     <!-- HERO -->
     <div class="hero-grid">
       <div class="hero-left">
-        <span class="hero-since">Crie seus links para sua bio</span>
-        <h1>Seus<br><span class="accent">Links</span></h1>
+        <span class="hero-since">Crie seu link na bio</span>
+        <h1>Link na<br><span class="accent">Bio</span></h1>
         <p class="hero-desc">Crie sua lista de links personalizada e compartilhe tudo com um único link. <strong>100% gratuito</strong>.</p>
         <span class="hero-tags">Instagram__TikTok__YouTube__WhatsApp</span>
         <a href="/painel" class="hero-cta">Criar minha página ↗</a>
