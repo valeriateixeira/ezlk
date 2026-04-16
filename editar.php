@@ -80,6 +80,7 @@ function e($str) {
 $name = $profile['profileName'];
 $links = $profile['links'];
 $customLinks = $profile['customLinks'] ?? [];
+$products = $profile['products'] ?? [];
 $avatar = $profile['avatar'] ?? null;
 ?>
 <!DOCTYPE html>
@@ -249,6 +250,44 @@ $avatar = $profile['avatar'] ?? null;
                     <button type="button" id="addLinkBtn" class="add-link-btn">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Adicionar link
+                    </button>
+                </div>
+
+                <!-- Products -->
+                <div class="form-group">
+                    <label>Produtos</label>
+                    <div class="form-group" style="margin-top:4px;">
+                        <label for="productCardColor" style="font-size:0.82rem;color:#666;">Cor do card</label>
+                        <div class="color-picker-wrap">
+                            <input type="color" id="productCardColor" name="productCardColor" value="<?= e($profile['productCardColor'] ?? '#ffffff') ?>">
+                            <input type="text" class="color-hex-input" id="productCardColorLabel" value="<?= e($profile['productCardColor'] ?? '#ffffff') ?>" maxlength="7" spellcheck="false">
+                        </div>
+                    </div>
+                    <div id="productsContainer">
+                        <?php foreach ($products as $i => $product): ?>
+                        <div class="product-row">
+                            <div class="product-row-header">
+                                <div class="product-icon-upload" title="Clique para trocar icone"<?php if (!empty($product['icon'])): ?> data-existing="<?= e($product['icon']) ?>"<?php endif; ?>>
+                                    <?php if (!empty($product['icon'])): ?>
+                                        <img src="<?= e($product['icon']) ?>" alt="<?= e($product['title']) ?>">
+                                    <?php else: ?>
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                    <?php endif; ?>
+                                    <input type="file" accept="image/*" hidden>
+                                </div>
+                                <div class="product-row-fields">
+                                    <input type="text" placeholder="Nome do produto" class="product-title" value="<?= e($product['title'] ?? '') ?>">
+                                    <input type="text" placeholder="Descricao curta" class="product-desc" value="<?= e($product['description'] ?? '') ?>">
+                                    <input type="url" placeholder="https://link-do-produto.com" class="product-url" value="<?= e($product['url'] ?? '') ?>">
+                                </div>
+                                <button type="button" class="remove-link-btn" title="Remover">&times;</button>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" id="addProductBtn" class="add-product-btn">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Adicionar produto
                     </button>
                 </div>
 
@@ -461,9 +500,48 @@ $avatar = $profile['avatar'] ?? null;
                 if (title) linksHtml += `<div style="${linkStyle}">${pvIcons.link} ${esc(title)}</div>`;
             });
 
+            // Product cards in preview
+            let productsHtml = '';
+            const pccColor = document.getElementById('productCardColor').value;
+            const pccR = parseInt(pccColor.slice(1,3), 16);
+            const pccG = parseInt(pccColor.slice(3,5), 16);
+            const pccB = parseInt(pccColor.slice(5,7), 16);
+            const pccLum = (0.299*pccR + 0.587*pccG + 0.114*pccB) / 255;
+            const pccTextColor = pccLum < 0.5 ? '#fff' : '#1a1a1a';
+            const pccDescColor = pccLum < 0.5 ? 'rgba(255,255,255,0.6)' : '#666';
+
+            const productCards = [];
+            document.querySelectorAll('.product-row').forEach(row => {
+                const title = row.querySelector('.product-title').value.trim();
+                if (!title) return;
+                const desc = row.querySelector('.product-desc').value.trim();
+                const iconUpload = row.querySelector('.product-icon-upload');
+                const iconSrc = iconUpload.dataset.preview || '';
+                const iconHtml = iconSrc
+                    ? `<img src="${iconSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`
+                    : `<div style="width:100%;height:100%;background:rgba(0,0,0,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:${pccDescColor};font-size:16px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                       </div>`;
+                productCards.push({ title, desc, iconHtml });
+            });
+            productCards.forEach((card, idx) => {
+                const isLastOdd = (idx === productCards.length - 1) && (productCards.length % 2 === 1);
+                const spanStyle = isLastOdd ? 'grid-column:1/-1;' : '';
+                productsHtml += `<div style="${spanStyle}background:${pccColor};border-radius:${btnRadius};padding:8px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;box-sizing:border-box;overflow:hidden;">
+                    <div style="width:30px;height:30px;flex-shrink:0;border-radius:6px;overflow:hidden;">${card.iconHtml}</div>
+                    <div style="width:100%;min-width:0;">
+                        <div style="font-size:8px;font-weight:700;color:${pccTextColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(card.title)}</div>
+                        ${card.desc ? `<div style="font-size:7px;color:${pccDescColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(card.desc)}</div>` : ''}
+                    </div>
+                </div>`;
+            });
+
             let html = '';
             if (socialHtml) {
                 html += `<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">${socialHtml}</div>`;
+            }
+            if (productsHtml) {
+                html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin-bottom:20px;box-sizing:border-box;">${productsHtml}</div>`;
             }
             if (linksHtml) {
                 html += `<div style="display:flex;flex-direction:column;gap:8px;width:100%;">${linksHtml}</div>`;
@@ -478,7 +556,7 @@ $avatar = $profile['avatar'] ?? null;
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&format=png&color=${qrColor}&bgcolor=${qrBg}&data=${encodeURIComponent('https://ezlk.com.br/' + profileName)}" width="60" height="60" style="border-radius:6px;background:#fff;padding:4px;">
             </div>`;
 
-            if (!socialHtml && !linksHtml) {
+            if (!socialHtml && !linksHtml && !productsHtml) {
                 pvLinks.innerHTML = `<div class="pv-placeholder" style="color:${subtextColor}">Seus links aparecem aqui</div>`;
             } else {
                 pvLinks.innerHTML = html;
@@ -559,6 +637,21 @@ $avatar = $profile['avatar'] ?? null;
         // Glass effect toggle
         document.getElementById('btnGlass').addEventListener('change', updatePreview);
 
+        // Product card color
+        const productCardColorInput = document.getElementById('productCardColor');
+        const productCardColorLabel = document.getElementById('productCardColorLabel');
+        productCardColorInput.addEventListener('input', () => {
+            productCardColorLabel.value = productCardColorInput.value;
+            updatePreview();
+        });
+        productCardColorLabel.addEventListener('input', () => {
+            const v = productCardColorLabel.value.startsWith('#') ? productCardColorLabel.value : '#' + productCardColorLabel.value;
+            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                productCardColorInput.value = v;
+                updatePreview();
+            }
+        });
+
         // Avatar upload preview
         const avatarUpload = document.getElementById('avatarUpload');
         const avatarInput = document.getElementById('avatar');
@@ -611,6 +704,68 @@ $avatar = $profile['avatar'] ?? null;
             updatePreview();
         });
 
+        // Products
+        const productsContainer = document.getElementById('productsContainer');
+        const addProductBtn = document.getElementById('addProductBtn');
+
+        function initProductRow(row) {
+            const iconUpload = row.querySelector('.product-icon-upload');
+            let fileInput = row.querySelector('input[type="file"]');
+            if (iconUpload.dataset.existing) {
+                iconUpload.dataset.preview = iconUpload.dataset.existing;
+            }
+            iconUpload.addEventListener('click', () => {
+                const currentInput = row.querySelector('.product-icon-upload input[type="file"]');
+                if (currentInput) currentInput.click();
+            });
+            function handleFileChange(input) {
+                const file = input.files[0];
+                if (file) {
+                    row._selectedFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        iconUpload.innerHTML = `<img src="${ev.target.result}" alt="Icon"><input type="file" accept="image/*" hidden>`;
+                        const newInput = iconUpload.querySelector('input[type="file"]');
+                        newInput.addEventListener('change', () => handleFileChange(newInput));
+                        iconUpload.dataset.preview = ev.target.result;
+                        delete iconUpload.dataset.existing;
+                        updatePreview();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            fileInput.addEventListener('change', () => handleFileChange(fileInput));
+            row.querySelector('.remove-link-btn').addEventListener('click', () => { row.remove(); updatePreview(); });
+            row.querySelectorAll('.product-title, .product-desc').forEach(input => {
+                input.addEventListener('input', updatePreview);
+            });
+        }
+
+        // Init existing product rows
+        document.querySelectorAll('.product-row').forEach(initProductRow);
+
+        addProductBtn.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = 'product-row';
+            row.innerHTML = `
+                <div class="product-row-header">
+                    <div class="product-icon-upload" title="Clique para adicionar icone">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <input type="file" accept="image/*" hidden>
+                    </div>
+                    <div class="product-row-fields">
+                        <input type="text" placeholder="Nome do produto" class="product-title">
+                        <input type="text" placeholder="Descricao curta" class="product-desc">
+                        <input type="url" placeholder="https://link-do-produto.com" class="product-url">
+                    </div>
+                    <button type="button" class="remove-link-btn" title="Remover">&times;</button>
+                </div>
+            `;
+            initProductRow(row);
+            productsContainer.appendChild(row);
+            updatePreview();
+        });
+
         // Initial preview render
         updatePreview();
 
@@ -641,6 +796,23 @@ $avatar = $profile['avatar'] ?? null;
                 }
             });
             formData.append('customLinks', JSON.stringify(customLinks));
+
+            const productsList = [];
+            document.querySelectorAll('.product-row').forEach((row, i) => {
+                const title = row.querySelector('.product-title').value.trim();
+                const description = row.querySelector('.product-desc').value.trim();
+                const url = row.querySelector('.product-url').value.trim();
+                if (title) {
+                    const iconUpload = row.querySelector('.product-icon-upload');
+                    const existingIcon = iconUpload.dataset.existing || '';
+                    const newFile = row._selectedFile || null;
+                    productsList.push({ title, description, url, existingIcon: newFile ? '' : existingIcon });
+                    if (newFile) {
+                        formData.append('product_icon_' + i, newFile);
+                    }
+                }
+            });
+            formData.append('products', JSON.stringify(productsList));
 
             try {
                 const res = await fetch('/api/editar.php', {

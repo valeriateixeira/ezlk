@@ -102,6 +102,53 @@ if (!empty($_POST['customLinks'])) {
     }
 }
 
+// Parse and validate products
+$products = [];
+if (!empty($_POST['products'])) {
+    $parsedProducts = json_decode($_POST['products'], true);
+    if (is_array($parsedProducts)) {
+        $productDir = __DIR__ . '/../assets/products';
+        if (!is_dir($productDir)) mkdir($productDir, 0755, true);
+
+        foreach ($parsedProducts as $i => $product) {
+            if (empty($product['title'])) continue;
+            $url = '';
+            if (!empty($product['url'])) {
+                $url = filter_var($product['url'], FILTER_VALIDATE_URL);
+                if (!$url || !preg_match('#^https?://#i', $url)) $url = '';
+            }
+
+            $iconPath = null;
+            $fileKey = 'product_icon_' . $i;
+            if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($_FILES[$fileKey]['tmp_name']);
+
+                if (in_array($mimeType, $allowedTypes) && $_FILES[$fileKey]['size'] <= 2 * 1024 * 1024) {
+                    $ext = match($mimeType) {
+                        'image/jpeg' => '.jpg',
+                        'image/png'  => '.png',
+                        'image/gif'  => '.gif',
+                        'image/webp' => '.webp',
+                        default      => '.jpg'
+                    };
+                    $filename = $profileName . '_product_' . $i . $ext;
+                    move_uploaded_file($_FILES[$fileKey]['tmp_name'], $productDir . '/' . $filename);
+                    $iconPath = '/assets/products/' . $filename;
+                }
+            }
+
+            $products[] = [
+                'title' => substr($product['title'], 0, 100),
+                'description' => substr($product['description'] ?? '', 0, 200),
+                'url' => $url,
+                'icon' => $iconPath,
+            ];
+        }
+    }
+}
+
 $bgColor = $_POST['bgColor'] ?? '#0f0f0f';
 if (!preg_match('/^#[0-9a-fA-F]{6}$/', $bgColor)) $bgColor = '#0f0f0f';
 
@@ -131,6 +178,11 @@ $profile = [
         'whatsapp'  => preg_replace('/[^0-9]/', '', $_POST['whatsapp'] ?? '')
     ],
     'custom_links' => $customLinks,
+    'products'           => $products,
+    'product_card_color' => (function() {
+        $c = $_POST['productCardColor'] ?? '#ffffff';
+        return preg_match('/^#[0-9a-fA-F]{6}$/', $c) ? $c : '#ffffff';
+    })(),
 ];
 
 $res = supabase('POST', 'profiles', $profile, $token, ['Prefer: return=representation']);

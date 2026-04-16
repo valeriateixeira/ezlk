@@ -9,7 +9,13 @@ if ($profileName) {
     if (!empty($res['data'][0])) {
         $profile = mapProfile($res['data'][0]);
         // Atomic visit counter — no race conditions
-        supabaseRpc('increment_visit', ['p_name' => $profileName], SUPABASE_SERVICE_KEY);
+        $rpcRes = supabaseRpc('increment_visit', ['p_name' => $profileName], SUPABASE_SERVICE_KEY);
+        // Fallback: direct update if RPC function doesn't exist (404) or fails
+        if (($rpcRes['status'] ?? 0) < 200 || ($rpcRes['status'] ?? 0) >= 300) {
+            supabase('PATCH', 'profiles?profile_name=eq.' . urlencode($profileName),
+                ['visit_count' => ($res['data'][0]['visit_count'] ?? 0) + 1, 'last_visited_at' => gmdate('c')],
+                SUPABASE_SERVICE_KEY);
+        }
     }
 }
 
@@ -79,6 +85,8 @@ $name = htmlspecialchars($profile['profileName'], ENT_QUOTES, 'UTF-8');
 $avatar = $profile['avatar'] ? htmlspecialchars($profile['avatar'], ENT_QUOTES, 'UTF-8') : null;
 $links = $profile['links'];
 $customLinks = $profile['customLinks'] ?? [];
+$products = $profile['products'] ?? [];
+$productCardColor = htmlspecialchars($profile['productCardColor'] ?? '#ffffff', ENT_QUOTES, 'UTF-8');
 $bgColor = htmlspecialchars($profile['bgColor'] ?? '#f4f6f8', ENT_QUOTES, 'UTF-8');
 $bgImage = $profile['bgImage'] ?? null;
 
@@ -122,6 +130,15 @@ $btnRadius = match($btnShape) {
 
 // Glass effect
 $btnGlass = !empty($profile['btnGlass']);
+
+// Product card color
+$pccHex = ltrim($productCardColor, '#');
+$pccR = hexdec(substr($pccHex, 0, 2));
+$pccG = hexdec(substr($pccHex, 2, 2));
+$pccB = hexdec(substr($pccHex, 4, 2));
+$pccLum = (0.299 * $pccR + 0.587 * $pccG + 0.114 * $pccB) / 255;
+$pccTextColor = $pccLum < 0.5 ? '#ffffff' : '#1a1a1a';
+$pccDescColor = $pccLum < 0.5 ? 'rgba(255,255,255,0.6)' : '#999';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -250,19 +267,19 @@ $btnGlass = !empty($profile['btnGlass']);
             text-decoration: none;
             transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
             <?php if ($btnGlass && $isDark): ?>
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            color: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            background: rgba(60, 60, 60, 0.45);
+            backdrop-filter: blur(40px) saturate(120%);
+            -webkit-backdrop-filter: blur(40px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
             <?php elseif ($btnGlass && !$isDark): ?>
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: rgba(200, 200, 200, 0.35);
+            backdrop-filter: blur(40px) saturate(120%);
+            -webkit-backdrop-filter: blur(40px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             color: rgba(0, 0, 0, 0.8);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
             <?php else: ?>
             background: <?= e($btnColor) ?>;
             color: <?= $btnTextColor ?>;
@@ -284,6 +301,93 @@ $btnGlass = !empty($profile['btnGlass']);
             display: flex;
             flex-direction: column;
             gap: 12px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .products-grid .product-card:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
+
+        .product-card {
+            background: <?= e($productCardColor) ?>;
+            box-shadow: 0 4px 16px <?= $isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.04)' ?>;
+            border-radius: <?= $btnRadius ?>;
+            padding: 16px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px <?= $isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)' ?>;
+        }
+
+        .product-card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .product-card-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-card-icon-placeholder {
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: <?= $pccDescColor ?>;
+        }
+
+        .product-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: <?= $pccTextColor ?>;
+            line-height: 1.3;
+        }
+
+        .product-card-desc {
+            font-size: 12px;
+            color: <?= $pccDescColor ?>;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 480px) {
+            .products-grid {
+                gap: 8px;
+            }
+            .product-card {
+                padding: 12px;
+            }
+            .product-card-icon {
+                width: 48px;
+                height: 48px;
+            }
+            .product-card-title {
+                font-size: 13px;
+            }
+            .product-card-desc {
+                font-size: 11px;
+            }
         }
 
         .qr-section {
@@ -317,23 +421,19 @@ $btnGlass = !empty($profile['btnGlass']);
             padding: 16px 24px;
             border-radius: <?= $btnRadius ?>;
             <?php if ($btnGlass && $isDark): ?>
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-bottom-color: rgba(255, 255, 255, 0.06);
-            border-right-color: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.95);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+            background: rgba(60, 60, 60, 0.45);
+            backdrop-filter: blur(40px) saturate(120%);
+            -webkit-backdrop-filter: blur(40px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
             <?php elseif ($btnGlass && !$isDark): ?>
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-bottom-color: rgba(0, 0, 0, 0.05);
-            border-right-color: rgba(0, 0, 0, 0.05);
+            background: rgba(200, 200, 200, 0.35);
+            backdrop-filter: blur(40px) saturate(120%);
+            -webkit-backdrop-filter: blur(40px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             color: rgba(0, 0, 0, 0.8);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
             <?php else: ?>
             background: <?= e($btnColor) ?>;
             color: <?= $btnTextColor ?>;
@@ -355,23 +455,23 @@ $btnGlass = !empty($profile['btnGlass']);
             left: 0;
             width: 100%;
             height: 50%;
-            background: linear-gradient(180deg, <?= $isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.3)' ?>, transparent);
+            background: linear-gradient(180deg, <?= $isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.15)' ?>, transparent);
             border-radius: <?= $btnRadius ?>;
             pointer-events: none;
         }
         .link-btn:hover {
             <?php if ($isDark): ?>
-            background: rgba(255, 255, 255, 0.18);
-            border-color: rgba(255, 255, 255, 0.3);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.12);
+            background: rgba(80, 80, 80, 0.55);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             color: #ffffff;
             <?php else: ?>
-            background: rgba(255, 255, 255, 0.7);
-            border-color: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+            background: rgba(220, 220, 220, 0.45);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             color: rgba(0, 0, 0, 0.9);
             <?php endif; ?>
-            transform: translateY(-3px);
+            transform: translateY(-2px);
         }
         <?php else: ?>
         .link-btn:hover {
@@ -473,6 +573,31 @@ $btnGlass = !empty($profile['btnGlass']);
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             </a>
             <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($products)): ?>
+        <div class="products-grid">
+            <?php foreach ($products as $product): ?>
+                <?php if (!empty($product['title'])): ?>
+                <?php $hasUrl = !empty($product['url']); ?>
+                <<?= $hasUrl ? 'a href="' . e($product['url']) . '" target="_blank" rel="noopener noreferrer"' : 'div' ?> class="product-card">
+                    <div class="product-card-icon">
+                        <?php if (!empty($product['icon'])): ?>
+                            <img src="<?= e($product['icon']) ?>" alt="<?= e($product['title']) ?>">
+                        <?php else: ?>
+                            <div class="product-card-icon-placeholder">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-card-title"><?= e($product['title']) ?></div>
+                    <?php if (!empty($product['description'])): ?>
+                        <div class="product-card-desc"><?= e($product['description']) ?></div>
+                    <?php endif; ?>
+                </<?= $hasUrl ? 'a' : 'div' ?>>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </div>
         <?php endif; ?>
 

@@ -44,7 +44,6 @@ function supabase(string $method, string $path, $body = null, ?string $token = n
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
 
     return ['status' => $httpCode, 'data' => json_decode($response, true)];
 }
@@ -70,6 +69,8 @@ function mapProfile(array $row): array
         'avatar'        => $row['avatar'] ?? null,
         'links'         => $row['links'] ?? ['instagram' => '', 'tiktok' => '', 'youtube' => '', 'whatsapp' => ''],
         'customLinks'   => $row['custom_links'] ?? [],
+        'products'         => $row['products'] ?? [],
+        'productCardColor' => $row['product_card_color'] ?? '#ffffff',
         'visitCount'    => $row['visit_count'] ?? 0,
         'lastVisitedAt' => $row['last_visited_at'] ?? null,
         'createdAt'     => $row['created_at'] ?? null,
