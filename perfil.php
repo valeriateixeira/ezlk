@@ -129,6 +129,7 @@ $btnGlass = !empty($profile['btnGlass']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-adsense-account" content="ca-pub-1714761269980983">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1714761269980983" crossorigin="anonymous"></script>
     <title><?= $name ?> - ezlk</title>
     <link rel="icon" type="image/png" href="/assets/ezlklogo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -388,6 +389,20 @@ $btnGlass = !empty($profile['btnGlass']);
             opacity: 0.7;
         }
 
+        .ad-container {
+            position: relative;
+            z-index: 1;
+            max-width: 440px;
+            width: 100%;
+            margin-top: 28px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .ad-container ins {
+            display: block;
+        }
+
         .footer {
             position: relative;
             z-index: 1;
@@ -478,6 +493,17 @@ $btnGlass = !empty($profile['btnGlass']);
     <div class="qr-section">
         <p class="qr-label">Escaneie para acessar</p>
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&format=png&color=<?= ltrim($textColor, '#') ?>&bgcolor=<?= ltrim($bgImage ? '000000' : ltrim($bgColor, '#'), '#') ?>&data=<?= urlencode('https://ezlk.com.br/' . $profile['profileName']) ?>" alt="QR Code" width="130" height="130">
+    </div>
+
+    <!-- banner_profile -->
+    <div class="ad-container">
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-1714761269980983"
+             data-ad-slot="9540165472"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
 
     <div class="footer">Feito com <a href="/">ezlk</a></div>
