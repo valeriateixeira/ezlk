@@ -40,7 +40,7 @@
     </div>
 
     <div class="hero-photos">
-      <img src="/assets/websiteimages/girl_glasses.jpg" alt="Criador de conteúdo">
+      <img src="/assets/websiteimages/girl_glasses.jpg" alt="Criador de conteúdo" decoding="async" width="420" height="520">
     </div>
 
     <div class="hero-huge-text">— Style & Links</div>
@@ -99,8 +99,16 @@
     <div class="footer-dev">
       desenvolvido por
       <a href="https://kodaee.com" target="_blank" rel="noopener">
-        <img src="assets/kodaeelogo.png" alt="kodaee" class="footer-dev-logo">
+        <img src="assets/kodaeelogo.png" alt="kodaee" class="footer-dev-logo" loading="lazy">
         kodaee
+      </a>
+    </div>
+    <div class="footer-socials">
+      <a href="https://instagram.com/kodaee.co" target="_blank" rel="noopener" aria-label="Instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2Zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5A4.25 4.25 0 0 0 20.5 16.25v-8.5A4.25 4.25 0 0 0 16.25 3.5Zm4.25 3.25a5.25 5.25 0 1 1 0 10.5 5.25 5.25 0 0 1 0-10.5Zm0 1.5a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Zm5.5-2a.875.875 0 1 1 0 1.75.875.875 0 0 1 0-1.75Z"/></svg>
+      </a>
+      <a href="https://tiktok.com/@kodaee.co" target="_blank" rel="noopener" aria-label="TikTok">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16.6 5.82A4.278 4.278 0 0 1 13.56 2h-3.09v13.67a2.59 2.59 0 0 1-2.59 2.41c-1.43 0-2.59-1.16-2.59-2.59a2.59 2.59 0 0 1 2.59-2.59c.27 0 .53.04.78.12V9.87a5.72 5.72 0 0 0-.78-.05C5.17 9.82 3 11.99 3 14.7A4.88 4.88 0 0 0 7.88 19.58a4.88 4.88 0 0 0 4.88-4.88V9.01a7.28 7.28 0 0 0 4.25 1.37V7.3a4.28 4.28 0 0 1-.41-1.48Z"/></svg>
       </a>
     </div>
   </footer>

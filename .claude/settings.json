@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push *)",
+      "Bash(/bin/ls -lh /Volumes/TOSHIBA_EXT/ezlk/assets/websiteimages/)",
+      "Bash(sips --help)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Volumes/TOSHIBA_EXT/ezlk/assets/websiteimages/girl_glasses.jpg /Volumes/TOSHIBA_EXT/ezlk/assets/websiteimages/fashion_girl.jpg /Volumes/TOSHIBA_EXT/ezlk/assets/websiteimages/man_headset.jpg /Volumes/TOSHIBA_EXT/ezlk/assets/websiteimages/worker_girl.jpg /Volumes/TOSHIBA_EXT/ezlk/assets/websiteimages/girls_posing.jpg)"
+    ]
+  }
+}

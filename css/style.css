@@ -1262,8 +1262,10 @@ a.floating-badge:hover {
   text-transform: none;
 }
 
-.footer-dev a:hover {
-  color: #fff;
+.footer-dev a:hover,
+.footer-dev a:active,
+.footer-dev a:focus {
+  color: #000;
 }
 
 .footer-dev-logo {
@@ -1271,6 +1273,26 @@ a.floating-badge:hover {
   width: 14px;
   vertical-align: middle;
   border-radius: 3px;
+}
+
+.footer-socials {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.footer-socials a {
+  color: #aaa;
+  transition: color 0.2s;
+  display: inline-flex;
+}
+
+.footer-socials a:hover,
+.footer-socials a:active,
+.footer-socials a:focus {
+  color: #000;
 }
 
 /* ===== RESPONSIVE ===== */
